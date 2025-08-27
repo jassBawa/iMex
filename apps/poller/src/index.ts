@@ -11,18 +11,21 @@ async function main() {
     );
 
     ws.on('message', (raw) => {
-      console.log(JSON.parse(raw.toString()));
       const msg = JSON.parse(raw.toString());
 
       // Binance multi-stream sends { stream, data }
       const trade = msg.data as BinanceTrade;
 
+      //db
       batch.push(trade);
+
+      //pub
+      // publiser.set("channle:trade", trade)
     });
 
     setInterval(async () => {
       if (batch.length > 0) {
-        const toInsert = batch.splice(0, batch.length); // take all trades
+        const toInsert = batch.splice(0, batch.length);
         await insertBatch(toInsert);
       }
     }, 5000);
@@ -47,27 +50,31 @@ interface BinanceTrade {
 }
 
 async function insertBatch(trades: BinanceTrade[]) {
+  try{
+
+  console.log('Inserted batch values')
   const values: any[] = [];
   const placeholders = trades
     .map((t, i) => {
-      // todo: check how its done
-      const base = i * 6; // 6 columns now
+      const base = i * 4; // mapping variables - $1 $2
       values.push(
         new Date(t.E),
         t.s,
         parseFloat(t.p),
         parseFloat(t.q),
-        t.t,
-        t.m ? "sell" : "buy" // side
       );
-      return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6})`;
+      return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4})`;
     })
     .join(',');
 
  const query = `
-    INSERT INTO trades (time, symbol, price, volume, trade_id, side)
+    INSERT INTO trades (time, symbol, price, volume)
     VALUES ${placeholders};
   `;
 
   await dbClient.query(query, values);
+  }
+catch(err){
+  console.log(err)
+}
 }
