@@ -26,7 +26,7 @@ app.get('/candles', async (req, res) => {
       return;
     }
 
-    const tableName = VIEWS[view]; // e.g., "trades_candlestick_5m"
+    const tableName = VIEWS[view];
 
     if (!tableName) {
       return res.status(400).json({ error: 'Invalid interval/view' });
