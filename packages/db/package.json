@@ -1,0 +1,19 @@
+{
+  "name": "@repo/db",
+  "module": "index.ts",
+  "type": "module",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@types/node": "^24.3.0",
+    "@types/pg": "^8.15.5",
+    "pg": "^8.15.5"
+  }
+}
