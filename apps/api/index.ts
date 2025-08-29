@@ -1,9 +1,12 @@
 import express from 'express';
 import { getDbClient } from '@repo/db';
+import cors from 'cors'
 
 const dbClient = getDbClient();
 
 const app = express();
+
+app.use(cors())
 
 const VIEWS: Record<string, string> = {
   '1m': 'trades_candlestick_1m',
@@ -13,20 +16,20 @@ const VIEWS: Record<string, string> = {
   '1d': 'trades_candlestick_1d',
 };
 
-app.get('/candles', async (req, res) => {
+app.get('/api/candles', async (req, res) => {
   try {
-    const { symbol, view } = req.query as {
+    const { symbol, interval } = req.query as {
       symbol: string;
-      view: string;
+      interval: string;
     };
 
-    if (!symbol && !view) 
+    if (!symbol && !interval) 
         {
       console.log('symbol view missing');
       return;
     }
 
-    const tableName = VIEWS[view];
+    const tableName = VIEWS[interval];
 
     if (!tableName) {
       return res.status(400).json({ error: 'Invalid interval/view' });
@@ -40,7 +43,7 @@ app.get('/candles', async (req, res) => {
     LIMIT 500;
     `;
 
-    const { rows } = await dbClient.query(query, [symbol]);
+    const { rows } = await dbClient.query(query, [symbol.toUpperCase()]);
     res.json(rows);
   } catch (err) {
     console.error(err);

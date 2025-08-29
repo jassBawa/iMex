@@ -35,6 +35,8 @@ async function main() {
         time: trade.T,
       };
 
+      // price * 1.001 -> ask 
+      // price * 0.099 -> bid
       const currentPrice = {
         symbol: trade.s,
         price: parseFloat(trade.p),
