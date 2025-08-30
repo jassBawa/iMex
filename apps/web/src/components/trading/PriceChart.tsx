@@ -94,30 +94,30 @@ export default function PriceChart({ symbol = 'btcusdt' }: PriceChartProps) {
       height: 400,
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
-        textColor: '#9ca3af',
+        textColor: '#64748b',
       },
       grid: {
-        vertLines: { color: 'rgba(156, 163, 175, 0.1)' },
-        horzLines: { color: 'rgba(156, 163, 175, 0.1)' },
+        vertLines: { color: 'rgba(148, 163, 184, 0.15)' },
+        horzLines: { color: 'rgba(148, 163, 184, 0.15)' },
       },
       crosshair: {
         mode: 1,
-        vertLine: { color: 'rgba(59, 130, 246, 0.3)', width: 1 },
-        horzLine: { color: 'rgba(59, 130, 246, 0.3)', width: 1 },
+        vertLine: { color: 'rgba(59, 130, 246, 0.4)', width: 2 },
+        horzLine: { color: 'rgba(59, 130, 246, 0.4)', width: 2 },
       },
-      rightPriceScale: { borderColor: 'rgba(156, 163, 175, 0.2)' },
+      rightPriceScale: { borderColor: 'rgba(148, 163, 184, 0.3)' },
       timeScale: {
-        borderColor: 'rgba(156, 163, 175, 0.2)',
+        borderColor: 'rgba(148, 163, 184, 0.3)',
         timeVisible: true,
       },
     });
 
     const candlestickSeries = chart.addSeries(CandlestickSeries, {
-      upColor: '#10b981',
-      downColor: '#ef4444',
+      upColor: '#059669',
+      downColor: '#dc2626',
       borderVisible: false,
-      wickUpColor: '#10b981',
-      wickDownColor: '#ef4444',
+      wickUpColor: '#059669',
+      wickDownColor: '#dc2626',
     });
 
     candlestickSeries.setData(candleData);
@@ -143,16 +143,20 @@ export default function PriceChart({ symbol = 'btcusdt' }: PriceChartProps) {
   const formatPrice = (price: number) => price.toFixed(4);
 
   return (
-    <Card className="border-card-border bg-card/50 backdrop-blur-sm">
-      <div className="p-4 border-b border-card-border flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-sm">Price Chart</h3>
+    <Card className="border-slate-200/60 bg-white/70 backdrop-blur-sm shadow-lg">
+      <div className="p-6 border-b border-slate-200/60 flex items-center justify-between bg-gradient-to-r from-slate-50/80 to-blue-50/40">
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-6 bg-gradient-to-b from-blue-500 to-indigo-600 rounded-full"></div>
+          <h3 className="font-bold text-lg text-slate-800">Live Chart</h3>
           {loading && (
-            <span className="text-xs text-muted-foreground">Loading...</span>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+              <span className="text-xs text-slate-500 font-medium">Loading...</span>
+            </div>
           )}
-          {error && <span className="text-xs text-red-500">{error}</span>}
+          {error && <span className="text-xs text-rose-600 bg-rose-50 px-2 py-1 rounded">{error}</span>}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Select value={interval} onValueChange={setInterval}>
             <SelectTrigger>
               <SelectValue placeholder="Interval" />
@@ -165,29 +169,32 @@ export default function PriceChart({ symbol = 'btcusdt' }: PriceChartProps) {
               <SelectItem value="1d">1d</SelectItem>
             </SelectContent>
           </Select>
-          <Badge variant="outline" className="text-xs">
-            {symbol}
+          <Badge variant="outline" className="text-xs font-semibold bg-blue-50 text-blue-700 border-blue-200">
+            {symbol.toUpperCase()}
           </Badge>
         </div>
       </div>
 
-      <div className="p-4">
+      <div className="p-6">
         <div
           ref={chartRef}
-          className="w-full h-[400px] rounded-lg overflow-hidden bg-gradient-to-b from-muted/5 to-muted/20 relative border border-card-border"
+          className="w-full h-[400px] rounded-xl overflow-hidden bg-gradient-to-br from-slate-50/80 via-blue-50/30 to-indigo-50/40 relative border border-slate-200/60 shadow-inner"
         />
       </div>
 
       {/* Chart Info */}
-      <div className="px-4 pb-4">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+      <div className="px-6 pb-6">
+        <div className="flex items-center justify-between text-xs text-slate-500 bg-slate-50/50 p-3 rounded-lg border border-slate-200/40">
           <div className="flex items-center gap-4">
-            <span>O: {formatPrice(candleData.at(-1)?.open || 0)}</span>
-            <span>H: {formatPrice(candleData.at(-1)?.high || 0)}</span>
-            <span>L: {formatPrice(candleData.at(-1)?.low || 0)}</span>
-            <span>C: {formatPrice(candleData.at(-1)?.close || 0)}</span>
+            <span className="font-semibold">O: <span className="text-slate-700">${formatPrice(candleData.at(-1)?.open || 0)}</span></span>
+            <span className="font-semibold">H: <span className="text-emerald-600">${formatPrice(candleData.at(-1)?.high || 0)}</span></span>
+            <span className="font-semibold">L: <span className="text-rose-600">${formatPrice(candleData.at(-1)?.low || 0)}</span></span>
+            <span className="font-semibold">C: <span className="text-slate-700">${formatPrice(candleData.at(-1)?.close || 0)}</span></span>
           </div>
-          <div className="text-primary">Live Market Data</div>
+          <div className="text-blue-600 font-semibold flex items-center gap-2">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+            Live Market Data
+          </div>
         </div>
       </div>
     </Card>

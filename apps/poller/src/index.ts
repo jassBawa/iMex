@@ -25,21 +25,25 @@ async function main() {
         removeOnFail: true,
       });
 
-      // pub
+     // constants
+      const ASKCONSTANT = 1.03;
+      const BIDCONSTANT = 0.99; // 👈 fixed (0.09 would make price 90% lower, unrealistic)
+      const basePrice = parseFloat(trade.p);
+
+      // decide side
       const side = trade.m ? 'ask' : 'bid';
+
+      // adjusted price
+      const adjustedPrice =
+        side === 'ask'
+          ? basePrice * ASKCONSTANT
+          : basePrice * BIDCONSTANT;
+
       const order = {
         type: side,
         symbol: trade.s,
-        price: parseFloat(trade.p),
+        price: adjustedPrice,
         quantity: parseFloat(trade.q),
-        time: trade.T,
-      };
-
-      // price * 1.001 -> ask 
-      // price * 0.099 -> bid
-      const currentPrice = {
-        symbol: trade.s,
-        price: parseFloat(trade.p),
         time: trade.T,
       };
 
@@ -48,7 +52,7 @@ async function main() {
         'bidsAsks',
         JSON.stringify({
           order,
-          currentPrice,
+          adjustedPrice,
         })
       );
     });
