@@ -1,13 +1,12 @@
 import { Router } from "express";
-import { signupHandler, loginHandler } from "../controllers/auth.controller";
-import { asyncHandler } from "../middlewares/asyncHandler";
-import { authMiddleware } from "../middlewares/authMiddleware"
+import { signupHandler, loginHandler, getUserBalance } from "../controllers/auth.controller";
+import { authMiddleware } from "../middlewares/authMiddleware";
 
 const router = Router();
 
-// auth routes
-router.post("/signup", asyncHandler(signupHandler));
-router.post("/login", asyncHandler(loginHandler));
 
+router.post("/signup", signupHandler);
+router.post("/login", loginHandler);
+router.get('/get-user-balance', authMiddleware, getUserBalance )
 
 export default router;

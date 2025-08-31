@@ -49,7 +49,7 @@ export default function PriceChart({ symbol = 'btcusdt' }: PriceChartProps) {
       setError(null);
 
       const response = await fetch(
-        `http://localhost:4000/api/candles?symbol=${symbol}&interval=${interval}`
+        `http://localhost:4000/api/v1/candles?symbol=${symbol}&interval=${interval}`
       );
 
       if (!response.ok) {

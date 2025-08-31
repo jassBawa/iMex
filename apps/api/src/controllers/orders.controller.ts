@@ -1,51 +1,57 @@
+import {randomUUID} from 'crypto'
 import type { Request, Response } from 'express';
+import { getCurrentPrice } from '../lib/redisClient';
 import { orderMap, userMap } from '../memoryDb';
-import { randomUUIDv7 } from 'bun';
-import { currentPrice } from '../lib/redisClient';
-import type { Order, User } from '../types/types';
-import { parse, symbol } from 'zod';
-
-interface OrderDto {
-  asset: string;
-  type: 'buy' | 'sell';
-  margin: number;
-  leverage: number;
-}
+import type { Order } from '../types/types';
 
 export async function createOrder(req: Request, res: Response) {
   try {
-    const { asset, type, margin, leverage } = req.body as OrderDto;
+    const { symbol, side, quantity, leverage, stopLoss, takeProfit } = req.body;
+    const user = userMap.get(req.userId);
 
-    const order: OrderDto = {
-      asset,
-      type,
-      margin: Number(margin), //
-      leverage: Number(leverage),
+    if (!user) {
+      res.status(400).json({ error: 'User not found' });
+      return;
+    }
+    const price = getCurrentPrice();
+
+    if (!price) {
+      return res.status(500).json({ error: 'Price feed not available' });
+    }
+
+    const orderSide = side.toUpperCase() as 'BUY' | 'SELL';
+    const marginRequired = (quantity * price) / leverage;
+
+    if (user.balance.amount < marginRequired) {
+      return res.status(400).json({ error: 'Insufficient balance' });
+    }
+
+    // decrease balance
+    user.balance.amount -= marginRequired;
+
+    const newOrder: Order = {
+      createdAt: new Date(),
+      id: randomUUID(),
+      margin: marginRequired,
+      leverage,
+
+      stopLoss,
+      takeProfit,
+      status: 'OPEN',
+      userId: user.id,
+      openPrice: price,
+      quantity: quantity,
+      side: orderSide,
+      symbol,
     };
 
+    orderMap.set(newOrder.id, newOrder);
+    user.positions.push(newOrder.id);
 
-    if(currentPrice){
-        // todo: check this approach
-        return;
-    }
-
-    const user = userMap.values().find((user) => user.id === req.userId)
-
-    if(!user){
-        res.status(400).json({error: "User not found"})
-        return;
-    }
-
-
-     let result;
-    if (order.type === "buy") {
-      result = await handleBuy(order, user);
-    } else if (order.type === "sell") {
-      result = await handleSell(order, user);
-    }
     return res.status(201).json({
       message: 'Order created successfully',
-      order,
+      order: newOrder,
+      balance: user.balance,
     });
   } catch (err) {
     console.error(err);
@@ -53,38 +59,76 @@ export async function createOrder(req: Request, res: Response) {
   }
 }
 
-async function handleBuy(order: OrderDto, user: User) {
-    // order
-    const quantity = order.margin * order.leverage;
-    
-    const parsedOrder: Order  = {
-        createdAt: new Date(),
-        id: randomUUIDv7(),
-        openPrice: currentPrice,        
-        quantity: quantity,
-        side: "BUY" as "BUY",
-        symbol: order.asset,
-        userId: user.id   
+export async function getPositions(req: Request, res: Response) {
+  try {
+    const user = userMap.get(req.userId);
+
+    if (!user) {
+      res.status(400).json({ error: 'No user found' });
+      return;
     }
-    orderMap.set(parsedOrder.id, parsedOrder)
-    console.log(parsedOrder)
 
-  return {
-    orderId: parsedOrder.id,
-    symbol: order.asset,
-    quantity,
-    openPrice: parsedOrder.openPrice
+    const positions = user.positions;
+
+    res.status(200).json({
+      positions,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to fetch positions' });
   }
-
 }
 
+export async function closeOrder(req: Request, res: Response) {
+  try {
+    const user = userMap.get(req.userId);
+    const { orderId } = req.body;
+    console.log(req.body, user)
+    if (!user) {
+      res.status(400).json({ error: 'No user found' });
+      return;
+    }
 
-async function handleSell(order: OrderDto, user: User) {
+    if (!orderMap.has(orderId)) {
+      res.status(404).json({ error: 'Order not found' });
+      return;
+    }
 
+    const order = orderMap.get(orderId);
+    if (!order) {
+      return;
+    }
+    if (order?.status === 'CLOSED') {
+      res.status(400).json({ error: 'Order already closed' });
+      return;
+    }
 
-  return {
-    ...order,
-    status: "open",
-    executedPrice: 100.5, // get live price from candles service
-  };
+    const exitPrice = getCurrentPrice();
+
+    if (!exitPrice) {
+      res.status(500).json({ error: 'Current price fetching failed' });
+      return;
+    }
+    let pnl = 0;
+    if (order?.side === 'BUY') {
+      pnl = (exitPrice - order.openPrice) * order.quantity;
+    } else {
+      pnl = (order?.openPrice - exitPrice) * order.quantity;
+    }
+
+    order.status = 'CLOSED';
+    order.closePrice = exitPrice;
+    order.pnl = pnl;
+
+    user.balance.amount += order.margin + pnl;
+
+    res.status(200).json({
+      message: 'Order closed',
+      order,
+      newBalance: user?.balance,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to fetch positions' });
+  }
 }

@@ -1,16 +1,28 @@
 import Redis from 'ioredis';
-import { parse } from 'zod';
 
 const subscriber = new Redis();
 
-await subscriber.subscribe('bidsAsks');
+let currentPrice: number | null = null;
 
-let currentPrice: number;
-
-subscriber.on('message', (channel, message) => {
-  const parsedData = JSON.parse(message);
-  console.log(parsedData);
-  currentPrice = parsedData.price;
+subscriber.subscribe('bidsAsks', (err, count) => {
+  if (err) {
+    console.error("Failed to subscribe:", err);
+    return;
+  }
+  console.log(`Subscribed successfully! This client is currently subscribed to ${count} channels.`);
 });
 
-export { currentPrice };
+subscriber.on('message', (channel, message) => {
+  try {
+    const parsedData = JSON.parse(message);
+    if (parsedData?.order.price !== undefined) {
+      currentPrice = parsedData.order.price;
+    }
+  } catch (err) {
+    console.error("Invalid JSON from Redis:", err);
+  }
+});
+
+export function getCurrentPrice(): number | null {
+  return currentPrice;
+}

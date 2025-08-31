@@ -21,6 +21,14 @@ export async function signupHandler(
     }
     const { email, password, name } = parsed.data;
 
+    const alreadyRegistred = Array.from(userMap.values()).find(
+      (user) => user.email === email
+    );
+
+    if (alreadyRegistred) {
+      res.status(409).json({ error: 'User already registred' });
+      return;
+    }
     const passwordHash = await bcrypt.hash(password, 10);
 
     const newUser: User = {
@@ -29,9 +37,14 @@ export async function signupHandler(
       password: passwordHash,
       name: name,
       id: randomUUID(),
+      balance: {
+        amount: 10000,
+        currency: 'USD',
+      },
+      positions: [],
     };
 
-    userMap.set(newUser.email, newUser);
+    userMap.set(newUser.id, newUser);
 
     res.status(201).json({
       email: newUser.email,
@@ -57,16 +70,20 @@ export async function loginHandler(
         .json({ error: parsed.error.flatten().fieldErrors });
     }
     const { email, password } = parsed.data;
-    const user = userMap.get(email);
+    const user = Array.from(userMap.values()).find(
+      (user) => user.email === email
+    );
 
     if (!user) {
-      throw res.status(404).json({ error: 'User not found' });
+      res.status(404).json({ error: 'User not found' });
+      return;
     }
 
     const isUserValid = await bcrypt.compare(password, user.password);
 
     if (!isUserValid) {
-      throw res.status(404).json({ error: 'Credentials wrong' });
+      res.status(401).json({ error: 'Credentials wrong' });
+      return;
     }
     const secret = process.env.JWT_SECRET!;
     const token = jwt.sign({ userId: user.id }, secret, { expiresIn: '4h' });
@@ -80,3 +97,18 @@ export async function loginHandler(
   }
 }
 
+export async function getUserBalance(req: Request, res: Response) {
+  try {
+    const user = userMap.get(req.userId);
+
+    if (!user) {
+      res.status(400).json({ error: 'No user found' });
+      return;
+    }
+
+    return res.status(200).json({ balance: user.balance });
+  } catch (err) {
+    console.log('Something went wrong: ', err);
+    res.status(500).json({ error: 'Something went Wrong' });
+  }
+}

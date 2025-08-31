@@ -1,4 +1,5 @@
 interface Balance {
+  currency: string,
   amount: number;
 }
 
@@ -10,15 +11,28 @@ export interface User {
   id: string;
 
   balance: Balance
-  order: string[] // list of orderids
+  positions: string[] // list of orderids
 }
 
 export interface Order {
-  createdAt: Date;
   id: string;
-  openPrice: number;
-  quantity: number;
-  side: 'BUY' | 'SELL';
-  symbol: string;
   userId: string;
+  symbol: string;
+  side: 'BUY' | 'SELL';
+  quantity: number;
+  margin: number;
+  leverage: number;
+  
+  openPrice: number;
+  closePrice?: number;
+  status: "OPEN" | "CLOSED"
+
+  stopLoss?: number;
+  takeProfit?:number;
+
+  createdAt: Date;
+  closedAt?: Date;
+
+  pnl?: number;
+
 }
