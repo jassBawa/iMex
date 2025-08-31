@@ -12,7 +12,7 @@ async function main() {
   try {
     // await publisher.connect();
     const binanceWs = new WebSocket(
-      'wss://stream.binance.com:9443/stream?streams=btcusdt@trade/ethusdt@trade'
+      'wss://stream.binance.com:9443/stream?streams=btcusdt@trade/ethusdt@trade/solusdt@trade'
     );
 
     binanceWs.on('message', async (raw) => {
@@ -26,8 +26,8 @@ async function main() {
       });
 
      // constants
-      const ASKCONSTANT = 1.03;
-      const BIDCONSTANT = 0.99; // 👈 fixed (0.09 would make price 90% lower, unrealistic)
+      const ASKCONSTANT = 1.005;
+      const BIDCONSTANT = 0.995; // 👈 fixed (0.09 would make price 90% lower, unrealistic)
       const basePrice = parseFloat(trade.p);
 
       // decide side
