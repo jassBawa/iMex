@@ -25,36 +25,27 @@ async function main() {
         removeOnFail: true,
       });
 
-     // constants
-      const ASKCONSTANT = 1.005;
-      const BIDCONSTANT = 0.995; // 👈 fixed (0.09 would make price 90% lower, unrealistic)
+      // constants
+      const ASKCONSTANT = 1.01;
+      const BIDCONSTANT = 0.99;
       const basePrice = parseFloat(trade.p);
 
-      // decide side
-      const side = trade.m ? 'ask' : 'bid';
-
-      // adjusted price
+      const side = trade.m ? 'ASK' : 'BID';
       const adjustedPrice =
-        side === 'ask'
-          ? basePrice * ASKCONSTANT
-          : basePrice * BIDCONSTANT;
+        side === 'ASK' ? basePrice * ASKCONSTANT : basePrice * BIDCONSTANT;
 
+      // todo: add decimals here
       const order = {
         type: side,
         symbol: trade.s,
+        side: side,
+        originalPrice: basePrice,
         price: adjustedPrice,
         quantity: parseFloat(trade.q),
         time: trade.T,
       };
 
-      // Publish to Redis
-      await publisher.publish(
-        'bidsAsks',
-        JSON.stringify({
-          order,
-          adjustedPrice,
-        })
-      );
+      await publisher.publish('bidsAsks', JSON.stringify(order));
     });
 
     binanceWs.on('error', (err) => {
@@ -75,5 +66,5 @@ interface BinanceTrade {
   q: string; // quantity
   T: number; // trade time
   m: boolean; // is buyer maker
-  M: boolean; // ignore
+  M: boolean;
 }

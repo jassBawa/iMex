@@ -16,7 +16,6 @@ async function main() {
     const parsedData = JSON.parse(message)
     wss.clients.forEach((client) => {
         if(client.readyState === WebSocket.OPEN){
-            // console.log(parsedData)
             client.send(JSON.stringify(parsedData));
         }
     }) 
