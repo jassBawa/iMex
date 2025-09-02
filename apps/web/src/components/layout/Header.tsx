@@ -7,12 +7,12 @@ import Link from 'next/link';
 function Header() {
   return (
     <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-      <div className="container mx-auto px-6">
+      <div className="container mx-auto">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-3">
               <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-                <BarChart3 className="h-5 w-5 text-primary-foreground" />
+                {/* <BarChart3 className="h-5 w-5 text-primary-foreground" /> */}
               </div>
               <h1 className="text-display text-xl font-bold">MarketView Pro</h1>
             </div>

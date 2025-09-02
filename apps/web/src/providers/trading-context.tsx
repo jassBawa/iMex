@@ -7,7 +7,6 @@ type TradingContextType = {
   setSymbol: (s: string) => void;
   interval: string;
   setInterval: (i: string) => void;
-  latestPriceRef: React.MutableRefObject<number | null>;
 };
 
 const TradingContext = createContext<TradingContextType | null>(null);
@@ -15,11 +14,10 @@ const TradingContext = createContext<TradingContextType | null>(null);
 export const TradingProvider = ({ children }: { children: ReactNode }) => {
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [interval, setInterval] = useState('1m');
-  const latestPriceRef = useRef<number | null>(null);
 
   return (
     <TradingContext.Provider
-      value={{ symbol, setSymbol, interval, setInterval, latestPriceRef }}
+      value={{ symbol, setSymbol, interval, setInterval }}
     >
       {children}
     </TradingContext.Provider>
